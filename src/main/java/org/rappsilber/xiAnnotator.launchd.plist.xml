@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC '!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"'>
+
+<plist>
+    <dict>
+        <key>Label</key>
+        <string>org.rappsilber.xiAnnotator</string>
+
+        <key>ProgramArguments</key>
+        <array>
+            <string>/usr/bin/java</string>
+            <string>-jar</string>
+            <string>/Users/lfischer/xiAnnotator/xiAnnotator.jar</string>
+        </array>
+
+
+
+        <key>UserName</key>
+        <string>lfischer</string>
+
+        <key>Sockets</key>
+        <dict>
+                <key>Listeners</key>
+                <dict>
+                    <key>SockServiceName</key>
+                    <string>8081</string>
+                    <key>SockType</key>
+                    <string>stream</string>
+                    <key>SockFamily</key>
+                    <string>IPv4</string>
+                </dict>
+        </dict>
+
+        <key>StandardOutPath</key>
+        <string>/Users/lfischer/xiAnnotator/log/annotator.stdout.log</string>
+
+        <key>StandardErrorPath</key>
+        <string>/Users/lfischer/xiAnnotator/log/annotator.stderr.log</string>
+
+    </dict>
+</plist>
