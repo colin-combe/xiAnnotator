@@ -210,6 +210,7 @@ public class xiAnnotator {
     @Produces(MediaType.APPLICATION_JSON ) 
     public Response getAnnotation(String msg) throws ParseException {
         //setup the config
+        Logger.getLogger(this.getClass().getName()).log(Level.FINE, "REQUEST /FULL {0}", msg);
         StringBuilder sb = new StringBuilder();
         try {
             Gson gson = new Gson();
@@ -221,6 +222,8 @@ public class xiAnnotator {
             
             AbstractRunConfig config = new AbstractRunConfig() {
                     {
+//                        evaluateConfigLine("modification:known::SYMBOLEXT:ox;MODIFIED:X;DELTAMASS:15.99491463");
+//                        evaluateConfigLine("modification:known::SYMBOLEXT:cm;MODIFIED:C,K,H,D,E,S,T,Y;DELTAMASS:15.99491463");
                         // modifications
                         for (LinkedTreeMap modTM : mods) {
                             
@@ -254,8 +257,6 @@ public class xiAnnotator {
                         double xlMas = Double.valueOf(xl.get("modMass").toString());
                         this.addCrossLinker(new SymetricSingleAminoAcidRestrictedCrossLinker("XL", xlMas, xlMas, new AminoAcid[]{AminoAcid.X}));
                         
-                        evaluateConfigLine("modification:known::SYMBOLEXT:ox;MODIFIED:X;DELTAMASS:15.99491463");
-                        evaluateConfigLine("modification:known::SYMBOLEXT:cm;MODIFIED:C,K,H,D,E,S,T,Y;DELTAMASS:15.99491463");
                         
                         evaluateConfigLine("loss:AminoAcidRestrictedLoss:NAME:CH3SOH;aminoacids:Mox;MASS:63.99828547");
                         evaluateConfigLine("loss:AminoAcidRestrictedLoss:NAME:H20;aminoacids:S,T,D,E;MASS:18.01056027;cterm");
@@ -304,6 +305,7 @@ public class xiAnnotator {
 
             sb = getJSON(spectrum, config, peps, links, 0, null, null);
         } catch (Exception e) {
+            Logger.getLogger(this.getClass().getName()).log(Level.WARNING,"Exception from request",e);
             return getResponse(exception2String(e),MediaType.TEXT_PLAIN_TYPE);
         }
         return getResponse(sb.toString(), MediaType.APPLICATION_JSON_TYPE);
@@ -315,6 +317,7 @@ public class xiAnnotator {
     @Produces(MediaType.APPLICATION_JSON ) 
     public Response getKnownModifications() throws ParseException {
         //setup the config
+        Logger.getLogger(this.getClass().getName()).log(Level.FINE, "REQUEST /knownModifications");
         StringBuilder sb = new StringBuilder();
         try {
             Connection con = getConnection();
@@ -407,7 +410,7 @@ public class xiAnnotator {
     @Produces( MediaType.APPLICATION_JSON )
     public Response getAnnotation(@PathParam("searchID") Integer searchID, @PathParam("searchRID") String searchRID, @PathParam("matchID") long matchID, @QueryParam("peptide") List<String> Peptides, @QueryParam("link") List<Integer> links, @QueryParam("custom") List<String> custom, @DefaultValue("1") @QueryParam("firstresidue") int firstResidue, @DefaultValue("true") @QueryParam("prettyprint") boolean prettyprint) {
         StringBuilder sb = new StringBuilder("");
-        Logger.getLogger(this.getClass().getName()).log(Level.FINE,"request for match id: " + matchID);
+        Logger.getLogger(this.getClass().getName()).log(Level.FINE, "REQUEST /{0}/{1}/{2}", new Object[]{searchID, searchRID, matchID});
 
         try {
             //get the connection pool
