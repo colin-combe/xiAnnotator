@@ -1,0 +1,8 @@
+The XiDBConfig file should be either in the same folder as as the jar-file or the path to it needs to be defined as java argument:
+java -DXI_DB_CONFIG:/etc/XiDBConfig.conf -jar xiAnnotator-1.3-jar-with-dependencies.jar
+
+if more then one entry is defined in the config then one can also define which connection to use:
+java -DXI_DB_CONFIG=/etc/XiDBConfig.conf -DXI_DB_CONF_NAME=xi3 -jar xiAnnotator-1.3-jar-with-dependencies.jar
+
+otherwise it defaults to xi3 or - missing that one - the first entry in the file.
+
