@@ -228,18 +228,27 @@ public class xiAnnotator {
                         for (LinkedTreeMap modTM : mods) {
                             
                             if (modTM.get("aminoAcids") != null && modTM.get("aminoAcids") instanceof ArrayList) {
-                                for (String aa : (ArrayList<String>) modTM.get("aminoAcids")) {
-                                    AminoAcid a =this.getAminoAcid(aa);
-                                    AminoModification am = new AminoModification(a.SequenceID + modTM.get("id").toString() , 
-                                            a, 
-                                            a.mass+Double.parseDouble(modTM.get("mass").toString()));
-                                    addVariableModification(am);
+                                ArrayList<String> allAAs=(ArrayList<String>) modTM.get("aminoAcids");
+                                HashSet<String> mods = new HashSet<>();
+                                for (String aa : allAAs) {
+                                    if (aa.contentEquals("X") || aa.contentEquals("*")) {
+                                        for (AminoAcid a : getAllAminoAcids().toArray(new AminoAcid[0])) 
+                                        if (!mods.contains(a.SequenceID) && ! (a instanceof AminoModification)) {
+                                            mods.add(a.SequenceID);
+                                            addModification(a.SequenceID, modTM);
+                                        }
+                                    } else if (!mods.contains(aa)) {
+                                        mods.add(aa);
+                                        addModification(aa, modTM);
+                                    }
+                                    
                                 }
                             } else {
-                                    AminoAcid a =this.getAminoAcid(modTM.get("aminoacid").toString());
-                                    AminoModification am = new AminoModification(modTM.get("aminoacid").toString() + modTM.get("id").toString() , 
-                                            a, Double.parseDouble(modTM.get("mass").toString()));
-                                    addVariableModification(am);
+                                String saa = modTM.get("aminoacid").toString();
+                                AminoAcid a =this.getAminoAcid(saa);
+                                AminoModification am = new AminoModification(modTM.get("aminoacid").toString() + modTM.get("id").toString() , 
+                                        a, Double.parseDouble(modTM.get("mass").toString()));
+                                addVariableModification(am);
                                 
                             }
                         }
@@ -263,6 +272,15 @@ public class xiAnnotator {
                         evaluateConfigLine("loss:AminoAcidRestrictedLoss:NAME:NH3;aminoacids:R,K,N,Q;MASS:17.02654493;nterm");
                         
                     }
+
+                private AminoModification addModification(String aa, LinkedTreeMap modTM) throws NumberFormatException {
+                    AminoAcid a =this.getAminoAcid(aa);
+                    AminoModification am = new AminoModification(a.SequenceID + modTM.get("id").toString() ,
+                            a,
+                            a.mass+Double.parseDouble(modTM.get("mass").toString()));
+                    addVariableModification(am);
+                    return am;
+                }
             };
             // cretae the spectrum
             Spectra spectrum = new Spectra();
