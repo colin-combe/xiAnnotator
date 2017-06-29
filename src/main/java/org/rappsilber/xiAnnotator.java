@@ -219,6 +219,7 @@ public class xiAnnotator {
             final ArrayList<LinkedTreeMap> mods = (ArrayList<LinkedTreeMap>) annotation.get("modifications");
             final LinkedTreeMap fragmentTolerance = (LinkedTreeMap) annotation.get("fragmentTolerance");
             final LinkedTreeMap precoursorTolerance = (LinkedTreeMap) annotation.get("precoursorTolerance");
+            final Object customConfig = annotation.get("custom");
             
             AbstractRunConfig config = new AbstractRunConfig() {
                     {
@@ -271,6 +272,13 @@ public class xiAnnotator {
                         evaluateConfigLine("loss:AminoAcidRestrictedLoss:NAME:H20;aminoacids:S,T,D,E;MASS:18.01056027;cterm");
                         evaluateConfigLine("loss:AminoAcidRestrictedLoss:NAME:NH3;aminoacids:R,K,N,Q;MASS:17.02654493;nterm");
                         
+                        if (customConfig instanceof ArrayList) {
+                            for (Object o : (ArrayList) customConfig) {
+                                evaluateConfigLine(o.toString());
+                            }
+                        } else if (customConfig instanceof String) {
+                            evaluateConfigLine(customConfig.toString());
+                        }
                     }
 
                 private AminoModification addModification(String aa, LinkedTreeMap modTM) throws NumberFormatException {
