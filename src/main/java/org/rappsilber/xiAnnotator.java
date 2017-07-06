@@ -585,7 +585,10 @@ public class xiAnnotator {
             sbIon.deleteCharAt(sbIon.length()-1);
             sb.append(",\n\t\"ions\":[").append(sbIon).append("\n\t],");
         }
-        Double xlmas = match.getCrosslinker().getCrossLinkedMass();
+        Double xlmas = 0d;
+        if (match.getCrosslinker() != null) {
+            xlmas = match.getCrosslinker().getCrossLinkedMass();
+        }
         String sXLMass = xlmas.toString();
         if (xlmas == Double.POSITIVE_INFINITY)
             xlmas = Double.MAX_VALUE;
@@ -949,7 +952,7 @@ public class xiAnnotator {
                 }
                 match = new MatchedXlinkedPeptideWeighted(spectrum, peps[0], peps[1], xl, config);
             } else
-                match = new MatchedXlinkedPeptide(spectrum, peps[0], null, config.getCrossLinker().get(0), config);
+                match = new MatchedXlinkedPeptide(spectrum, peps[0], null, null, config);
             
             if (links.size()>1) 
 
