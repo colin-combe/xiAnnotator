@@ -6,7 +6,7 @@
     <groupId>org.rappsilberlab</groupId>
     <artifactId>xiAnnotator</artifactId>
     <packaging>jar</packaging>
-    <version>1.4.2</version>
+    <version>1.4.3</version>
     <name>xiAnnotator</name>
 
     <dependencyManagement>
@@ -110,6 +110,13 @@
                 </configuration>
             </plugin>
         </plugins>
+        
+      <resources>
+        <resource>
+          <directory>src/main/resources</directory>
+          <filtering>true</filtering>
+        </resource>
+      </resources>           
     </build>
 
     <properties>
