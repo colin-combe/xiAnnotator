@@ -93,6 +93,9 @@ public class xiAnnotator {
             String[] v = properties.getProperty("annotator.version").split("\\.");
             
             version = new Version(Integer.parseInt(v[0]), Integer.parseInt(v[1]), Integer.parseInt(v[2]));
+            if (v.length > 3) {
+                version.setExtension(v[3]);
+            }
         } catch (IOException ex) {
             Logger.getLogger(xiAnnotator.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -140,7 +143,7 @@ public class xiAnnotator {
                     dbconf.readConfig();
                 else 
                     dbconf.readConfig(db_config);
-                
+
                 DBConnectionConfig.DBServer db = dbconf.getServers().get(0);
                 String m_db_connection = db.connectionString;
                 String m_db_user = db.user;
@@ -316,6 +319,7 @@ public class xiAnnotator {
                     return am;
                 }
             };
+            
             // cretae the spectrum
             Spectra spectrum = new Spectra();
             for (LinkedTreeMap peak : (ArrayList<LinkedTreeMap>)result.get("peaks")) {
@@ -473,15 +477,19 @@ public class xiAnnotator {
             for (String conf : custom) {
                 config.addCustomConfig(conf);
             }
+            config.addCustomConfig("FRAGMENTTREE:default");
+            config.storeObject("FRAGMENTTREE", "default");
+
             // make sure the random id fits
 //            if (!config.getRandomIDs()[0].contentEquals(searchRID)) {
 //                return getResponse("{\"error\":\"Search not found\"}", MediaType.APPLICATION_JSON_TYPE);
 //            }
             // turn peptides from string into a peptide replresentation with xlink
             
+            Logger.getLogger(this.getClass().getName()).log(Level.FINE, "REQUEST /{0}/{1}/{2} - read spectrum", new Object[]{searchID, searchRID, matchID});
             // get the spectrum
             String spec = "select s.*, sm.precursor_charge as match_charge from spectrum_match sm inner join spectrum s on sm.id = " + matchID + " and sm.spectrum_id = s.id and sm.search_id = " + searchID;
-            String peaks = "select s.* from spectrum_match sm inner join spectrum_peak s on sm.id = " + matchID + " and sm.spectrum_id = s.spectrum_id  and sm.search_id = " + searchID;
+            String peaks = "select s.* from spectrum_match sm inner join spectrum_peak s on sm.id = " + matchID + " and sm.spectrum_id = s.spectrum_id  and sm.search_id = " + searchID +" ORDER BY mz";
             Statement s = con.createStatement(ResultSet.TYPE_FORWARD_ONLY, ResultSet.CONCUR_READ_ONLY);
             ResultSet rsPeaks = s.executeQuery(peaks);
             ArrayList<SpectraPeak> aPeaks = new ArrayList<SpectraPeak>();
@@ -490,6 +498,8 @@ public class xiAnnotator {
                 aPeaks.add(new SpectraPeak(rsPeaks.getDouble("mz"), rsPeaks.getDouble("intensity")));
             }
             rsPeaks.close();
+
+            Logger.getLogger(this.getClass().getName()).log(Level.FINE, "REQUEST /{0}/{1}/{2} - read spectrum", new Object[]{searchID, searchRID, matchID});
             
             Spectra spectrum ;
             ResultSet rsSpec = s.executeQuery(spec);
@@ -504,6 +514,7 @@ public class xiAnnotator {
             Double expCharge = rsSpec.getDouble("precursor_charge");
             rsSpec.close();
 
+            Logger.getLogger(this.getClass().getName()).log(Level.FINE, "REQUEST /{0}/{1}/{2} - read db peptides", new Object[]{searchID, searchRID, matchID});
             String pepSQL = "SELECT "
                     + " p.sequence, p.peptide_length, p.mass, "
                     + " mp.match_type, "
@@ -568,6 +579,7 @@ public class xiAnnotator {
                 });
             }
 
+            Logger.getLogger(this.getClass().getName()).log(Level.FINE, "REQUEST /{0}/{1}/{2} - generate request peptides", new Object[]{searchID, searchRID, matchID});
             Peptide[] peps = null;
             if (Peptides.size() == 0) {
                 peps = new Peptide[dbPeptide.size()];
@@ -601,10 +613,15 @@ public class xiAnnotator {
                 }
             }
             
+            Logger.getLogger(this.getClass().getName()).log(Level.FINE, "REQUEST /{0}/{1}/{2} - generate json", new Object[]{searchID, searchRID, matchID});
             sb = getJSON(spectrum, config, peps, links, firstResidue, expCharge.intValue(), (long) matchID);
+            Logger.getLogger(this.getClass().getName()).log(Level.FINE, "REQUEST /{0}/{1}/{2} - done with json", new Object[]{searchID, searchRID, matchID});
 
         } catch (Exception e) {
     //        return Response.ok("{\"error\":\""+exception2String(e)+"\"}", MediaType.APPLICATION_JSON).header("Access-Control-Allow-Origin", "*").build();
+            System.err.println("error" + e);
+            Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "REQUEST /{0}/{1}/{2} - error", new Object[]{searchID, searchRID, matchID});
+            Logger.getLogger(this.getClass().getName()).log(Level.WARNING, "eroror is :\n", e);
             return getResponse("{\"error\":\""+exception2String(e)+"\"}", MediaType.APPLICATION_JSON_TYPE);
 //            return exception2String(e);
 //            StringBuilder sbError = new StringBuilder();
@@ -619,6 +636,7 @@ public class xiAnnotator {
         if (prettyprint)
             return getResponse(sb.toString(), MediaType.APPLICATION_JSON_TYPE);
         
+        Logger.getLogger(this.getClass().getName()).log(Level.FINE, "REQUEST /{0}/{1}/{2} - return json", new Object[]{searchID, searchRID, matchID});
         return getResponse(sb.toString().replaceAll("[\n\t]*", ""), MediaType.APPLICATION_JSON_TYPE);
     }
 
@@ -632,10 +650,14 @@ public class xiAnnotator {
                 config.getIsotopAnnotation().anotate(spectrum);
         } catch (Exception e) {
             Logger.getLogger(this.getClass().getName()).log(Level.SEVERE, "Error anotating Isotop clusters",e);
+            System.err.println("Error anotating Isotop clusters" + e);
         }
         MatchedXlinkedPeptide match = null;
+        Logger.getLogger(this.getClass().getName()).log(Level.FINE, "get match");
         match = getMatch(spectrum, peps, links, config,firstResidue);
+        Logger.getLogger(this.getClass().getName()).log(Level.FINE, "add peptide to json");
         addPeptides(sb, peps);
+        Logger.getLogger(this.getClass().getName()).log(Level.FINE, "add links to json");
         addLinks(sb, peps, match);
         sb.append("\n\"peaks\" :[\n\t");
         StringBuilder sbCluster = new StringBuilder("\n\"clusters\": [ ");
@@ -643,13 +665,20 @@ public class xiAnnotator {
         HashMap<SpectraPeak,Integer> peak2ID = new HashMap<>();
         HashMapArrayList<SpectraPeak,Integer> peaksCluster = new HashMapArrayList<SpectraPeak,Integer>();
         HashMapArrayList<Fragment,SpectraPeakMatchedFragment> framentMatches = new HashMapArrayList<>();
+
+        Logger.getLogger(this.getClass().getName()).log(Level.FINE, "extract cluster");
         int cID=extractCluster(spectrum, peak2ID, sbCluster,framentMatches,  fragmentCluster, peaksCluster,cluster);
+
+        Logger.getLogger(this.getClass().getName()).log(Level.FINE, "add peaks to json");
         addPeaks(spectrum, peaksCluster, sbCluster, cID, framentMatches, fragmentCluster, sb,cluster);
         // add the clusters
         sbCluster.deleteCharAt(sbCluster.length()-1);
+        Logger.getLogger(this.getClass().getName()).log(Level.FINE, "add cluster to json");
         sb.append(sbCluster);
         sb.append("],");
+        Logger.getLogger(this.getClass().getName()).log(Level.FINE, "add fragments to json");
         addFragments(sb, fragmentCluster, match, peps,cluster,framentMatches,config);
+        Logger.getLogger(this.getClass().getName()).log(Level.FINE, "add metadata to json");
         appendMetaData(sb, config, peps,match, expCharge,psmID);
         
         sb.append("\n}");
@@ -1067,6 +1096,9 @@ public class xiAnnotator {
     protected MatchedXlinkedPeptide getMatch(Spectra spectrum, Peptide[] peps, List<Integer> links, RunConfig config,int firstResidue) {
             MatchedXlinkedPeptide match = null;
             if (peps.length > 1) {
+                Logger.getLogger(this.getClass().getName()).log(Level.FINE, "xl match ");
+                Logger.getLogger(this.getClass().getName()).log(Level.FINE, "Pep1: " + peps[0]);
+                Logger.getLogger(this.getClass().getName()).log(Level.FINE, "Pep2: " +peps[1]);
                 double mass = spectrum.getPrecurserMass();
                 for (Peptide p : peps) 
                     mass-=p.getMass();
@@ -1079,16 +1111,19 @@ public class xiAnnotator {
                         diff=tdif;
                     }
                 }
+                Logger.getLogger(this.getClass().getName()).log(Level.FINE, "new match ");
                 match = new MatchedXlinkedPeptideWeighted(spectrum, peps[0], peps[1], xl, config);
-            } else
+            } else {
                 match = new MatchedXlinkedPeptide(spectrum, peps[0], null, null, config);
+            }
             
+            Logger.getLogger(this.getClass().getName()).log(Level.FINE, "to the actual matching ");
             if (links.size()>1) 
                     match.matchPeptides(links.get(0)-firstResidue,links.get(1)-firstResidue);
             else 
                 match.matchPeptides();
             
-
+            Logger.getLogger(this.getClass().getName()).log(Level.FINE, "return match ");
             return match;
     }
     
