@@ -63,10 +63,20 @@ public class xiAnnotatorTestMatchSearchMissmatch {
                 .queryParam("custom","fragment:BLikeDoubleFragmentation;ID:4")
                 .request().get(String.class);
 *///        http://129.215.14.63/xiAnnotator/annotate/3943/21672-50578-53639-62223/227500098/?peptide=GSSHHHHHHSSGLVPR&peptide=XdLFSK&link=4&link=1
-        String responseMsg = target.path("annotate/10250/57056-70694-16717-76186/1165236018/") 
-                .queryParam("peptide","EFLENYLLTDEGLEAVNK")
-                .queryParam("peptide","EFLENYLLTDEGLEAVNK")
+//        String responseMsg = target.path("annotate/10250/57056-70694-16717-76186/1165236018/") 
+//                .queryParam("peptide","EFLENYLLTDEGLEAVNK")
+//                .queryParam("peptide","EFLENYLLTDEGLEAVNK")
+//                .request().get(String.class);
+        //http://xi3.bio.ed.ac.uk/xiAnnotator/annotate/11634/77974-01158-25864-79223/3938059811/?peptide=HIQKEDVPSER
+//        String responseMsg = target.path("annotate/11634/77974-01158-25864-79223/3938059811/") 
+//                .queryParam("peptide","HIQKEDVPSER")
+//                .request().get(String.class);
+//http://xi3.bio.ed.ac.uk/xiAnnotator/annotate/11996/11003-13921-38126-65897/4440116871/?peptide=LAEVAAKESIK&peptide=YRPTKFSDTVGQDSIK&link=7&link=5
+        String responseMsg = target.path("annotate/11996/11003-13921-38126-65897/4440116871/") 
+                .queryParam("peptide","LAEVAAKESIK","YRPTKFSDTVGQDSIK")
+                .queryParam("link","7","3")
                 .request().get(String.class);
+        //10288/18135-52064-38377-95239/1205418326/?peptide=QEPERNECFLQHKDDNPNLPR&peptide=HKPKATKEQLKdtsspohAVMDDFAAFVEKCCK&link=13&link=7
 //                .queryParam("custom","fragment:BLikeDoubleFragmentation;ID:4")
         System.out.println(responseMsg);
         assertEquals("{\"error\":\"No Spectra\"}", responseMsg);
